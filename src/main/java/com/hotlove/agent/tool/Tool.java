@@ -1,7 +1,10 @@
 package com.hotlove.agent.tool;
 
-import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.agent.tool.ToolSpecification;
 
-public class Tool {
-    ChatModel model;
+public interface Tool {
+
+    ToolSpecification getToolSpecification();
+
+    ToolResult runTool();
 }

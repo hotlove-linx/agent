@@ -1,11 +1,14 @@
 package com.hotlove.agent.agent;
 
+import com.hotlove.agent.tool.FileSaverTool;
+import com.hotlove.agent.tool.TerminateTool;
 import com.hotlove.agent.tool.Tool;
-import dev.langchain4j.data.message.ChatMessage;
+import com.hotlove.agent.tool.ToolResult;
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.language.LanguageModel;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,23 +17,40 @@ import java.util.List;
  * @Date 2026/4/30 16:03
  * @Version 1.0
  */
+@Data
+@Slf4j
 public abstract class Agent {
 
     // 模型
-    public ChatModel chatModel;
+    public abstract ChatModel getChatModel();
 
     // 记忆
-    public List<ChatMessage> memeroy = new ArrayList<>();
+    public abstract ChatMemory getChatMemory();
+
+    public abstract String getPrompt();
 
     // 工具
-    public List<Tool> tools = new ArrayList<>();
+    public List<Tool> tools = List.of(new FileSaverTool(), new TerminateTool());
 
     // 最大循环次数
-    public final int MAX_STEP = 10;
+    public int maxSteps = 10;
 
-    public int currentStep;
+    public int currentStep = 1;
 
-    public abstract Tool step();
+    public abstract ToolResult step();
+
+    public void run() {
+        AgentState state = AgentState.RUNNING;
+        while (currentStep < maxSteps && state != AgentState.FINISHED) {
+            log.info("开始执行步骤: {}/{}", currentStep, maxSteps);
+            ToolResult toolResult = step();
+            currentStep++;
+            state = toolResult.getAgentState();
+            if (currentStep >= maxSteps) {
+                log.info("current step exceeded max steps：{}", currentStep);
+            }
+        }
+    }
 
 
 }
